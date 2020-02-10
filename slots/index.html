@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fumino Mood Slots</title>
+</head>
+<body>
+    <svg height="465" width="663" viewBox="0 0 663 465" style="background-color: black">
+        <defs>
+            <filter id="blur0">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0,0"/>
+            </filter>
+            <filter id="blur1">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0,0"/>
+            </filter>
+            <filter id="blur2">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0,0"/>
+            </filter>
+            <pattern id="slot" height="1395" width="220" patternUnits="userSpaceOnUse">
+                <image xlink:href="https://tailoric.github.io/Fumino-slot/slot1.png"/>
+            </pattern>
+        </defs>
+
+        <g id="slots">
+            <g filter="url(#blur0)"><rect y="0" x="0" width="220" height="2790" fill="url(#slot)"/></g>
+            <g filter="url(#blur1)"><rect y="0" x="220" width="220" height="2790" fill="url(#slot)"/></g>
+            <g filter="url(#blur2)"><rect y="0" x="440" width="220" height="2790" fill="url(#slot)"/></g>
+        </g>
+
+        <rect width="663" height="465" stroke="#000000" stroke-width="10" fill="none"/>
+    </svg>
+
+    <button onclick="spin()">Spin</button>
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.1.1/gsap.min.js"></script>
+<script>
+let spinners = document.querySelectorAll("#slots rect");
+let slotheight = 465;
+let slotimages = 3;
+let spinpersec = 2;
+let spintime = 2;
+let stopstagger = 1;
+let blurCoeff = 0.25;
+let slotwrap = gsap.utils.wrap(-slotheight*slotimages, 0);
+var spinning = 0;
+function spin() {
+    if(spinning > 0) return;
+    for(var i=0;i<spinners.length;i++) {
+        spinning += 1;
+        let s = spinners[i];
+        let blur = document.getElementById(`blur${i}`);
+        var start = parseInt(gsap.getProperty(s, 'y')) % (slotheight * slotimages);
+        console.log("spinner", i, start);
+
+        var val = Math.floor(Math.random() * slotimages);
+        var offs = val * slotheight;
+
+        offs += spinpersec * (spintime + i*stopstagger) * slotheight * slotimages;
+
+        s.dataset.prevY = start;
+
+        gsap.fromTo(s,
+        {
+            y: start
+        },
+        {
+            callbackScope: s,
+            duration: spintime + i*stopstagger,
+            y: offs,
+            modifiers: {
+                y: y=>slotwrap(parseFloat(y))
+            },
+            onUpdate: () => {
+                let y = gsap.getProperty(s, 'y');
+                let prevY = s.dataset.prevY;
+                let delta = parseFloat(y) - prevY;
+                delta *= blurCoeff;
+                s.dataset.prevY = y;
+                blur.firstElementChild.setAttribute("stdDeviation", `0,${delta}`);
+            },
+            onComplete: () => {
+                let y = gsap.getProperty(s, 'y');
+                s.dataset.prevY = y;
+                blur.firstElementChild.setAttribute("stdDeviation", "0");
+                spinning -= 1;
+            }
+        })
+    }
+}
+</script>
+</html>
