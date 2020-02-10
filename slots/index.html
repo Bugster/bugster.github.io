@@ -7,24 +7,53 @@
 <body>
     <svg height="465" width="663" viewBox="0 0 663 465" style="background-color: black">
         <defs>
+            <image id="slotimg" xlink:href="slot1.png"/>
             <filter id="blur0">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="0,0"/>
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0,0">
+                    <animate attributeName="stdDeviation" begin="indeterminate"
+                        fill="freeze" calcMode="spline" from="0 20" to="0 0"
+                        keySplines="0.91 0 1 1"/>
+                </feGaussianBlur>
             </filter>
             <filter id="blur1">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="0,0"/>
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0,0">
+                    <animate attributeName="stdDeviation" begin="indeterminate"
+                        fill="freeze" calcMode="spline" from="0 20" to="0 0"
+                        keySplines="0.91 0 1 1"/>
+                </feGaussianBlur>
+
             </filter>
             <filter id="blur2">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="0,0"/>
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0,0">
+                    <animate attributeName="stdDeviation" begin="indeterminate"
+                        fill="freeze" calcMode="spline" from="0 20" to="0 0"
+                        keySplines="0.91 0 1 1"/>
+                </feGaussianBlur>
             </filter>
-            <pattern id="slot" height="1395" width="220" patternUnits="userSpaceOnUse">
-                <image xlink:href="https://tailoric.github.io/Fumino-slot/slot1.png"/>
+            <pattern id="slot0" height="1395" width="220" patternUnits="userSpaceOnUse">
+                <use href="#slotimg"/>
+                <animateTransform attributeName="patternTransform" type="translate"
+                    begin="indeterminate" dur="5s" fill="freeze" calcMode="spline"
+                    keySplines="0 0 0.91 1"/>
+            </pattern>
+            <pattern id="slot1" height="1395" width="220" patternUnits="userSpaceOnUse">
+                <use href="#slotimg"/>
+                <animateTransform attributeName="patternTransform" type="translate"
+                    begin="indeterminate" dur="5s" fill="freeze" calcMode="spline"
+                    keySplines="0 0 0.91 1"/>
+            </pattern>
+            <pattern id="slot2" height="1395" width="220" patternUnits="userSpaceOnUse">
+                <use href="#slotimg"/>
+                <animateTransform attributeName="patternTransform" type="translate"
+                    begin="indeterminate" dur="5s" fill="freeze" calcMode="spline"
+                    keySplines="0 0 0.91 1"/>
             </pattern>
         </defs>
 
         <g id="slots">
-            <g filter="url(#blur0)"><rect y="0" x="0" width="220" height="2790" fill="url(#slot)"/></g>
-            <g filter="url(#blur1)"><rect y="0" x="220" width="220" height="2790" fill="url(#slot)"/></g>
-            <g filter="url(#blur2)"><rect y="0" x="440" width="220" height="2790" fill="url(#slot)"/></g>
+            <rect y="0" x="0" width="220" height="2790" fill="url(#slot0)" filter="url(#blur0)"/>
+            <rect y="0" x="220" width="220" height="2790" fill="url(#slot1)" filter="url(#blur1)"/>
+            <rect y="0" x="440" width="220" height="2790" fill="url(#slot2)" filter="url(#blur2)"/>
         </g>
 
         <rect width="663" height="465" stroke="#000000" stroke-width="10" fill="none"/>
@@ -33,60 +62,46 @@
     <button onclick="spin()">Spin</button>
 </body>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.1.1/gsap.min.js"></script>
 <script>
 let spinners = document.querySelectorAll("#slots rect");
 let slotheight = 465;
 let slotimages = 3;
-let spinpersec = 2;
+let spinpersec = 4;
 let spintime = 2;
 let stopstagger = 1;
-let blurCoeff = 0.25;
-let slotwrap = gsap.utils.wrap(-slotheight*slotimages, 0);
-var spinning = 0;
+var spinning = false;
 function spin() {
-    if(spinning > 0) return;
+    if(spinning) return;
+    spinning = true;
     for(var i=0;i<spinners.length;i++) {
-        spinning += 1;
+        // spinning += 1;
         let s = spinners[i];
-        let blur = document.getElementById(`blur${i}`);
-        var start = parseInt(gsap.getProperty(s, 'y')) % (slotheight * slotimages);
+        let bluranimation = document.querySelector(`#blur${i} animate`);
+        let animation = document.querySelector(`#slot${i} animateTransform`);
+
+        let currentY = ('y' in animation.dataset) ? parseFloat(animation.dataset.y) : 0;
+
+        var start = currentY % (slotheight * slotimages);
         console.log("spinner", i, start);
 
         var val = Math.floor(Math.random() * slotimages);
         var offs = val * slotheight;
 
-        offs += spinpersec * (spintime + i*stopstagger) * slotheight * slotimages;
+        let dur = spintime + i*stopstagger;
 
-        s.dataset.prevY = start;
+        offs += spinpersec * dur * slotheight * slotimages;
 
-        gsap.fromTo(s,
-        {
-            y: start
-        },
-        {
-            callbackScope: s,
-            duration: spintime + i*stopstagger,
-            y: offs,
-            modifiers: {
-                y: y=>slotwrap(parseFloat(y))
-            },
-            onUpdate: () => {
-                let y = gsap.getProperty(s, 'y');
-                let prevY = s.dataset.prevY;
-                let delta = parseFloat(y) - prevY;
-                delta *= blurCoeff;
-                s.dataset.prevY = y;
-                blur.firstElementChild.setAttribute("stdDeviation", `0,${delta}`);
-            },
-            onComplete: () => {
-                let y = gsap.getProperty(s, 'y');
-                s.dataset.prevY = y;
-                blur.firstElementChild.setAttribute("stdDeviation", "0");
-                spinning -= 1;
-            }
-        })
+        animation.dataset.y = currentY + offs;
+
+        animation.setAttribute("from", `0 ${currentY}`);
+        animation.setAttribute("to", `0 ${animation.dataset.y}`);
+        animation.setAttribute("dur", `${dur}s`);
+        bluranimation.setAttribute("dur", `${dur}s`);
+        animation.beginElement();
+        bluranimation.beginElement();
     }
+
+    setTimeout(()=>{spinning=false}, (spintime + (spinners.length-1)*stopstagger)*1000);
 }
 </script>
 </html>
