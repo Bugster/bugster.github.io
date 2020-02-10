@@ -82,7 +82,6 @@ function spin() {
         let currentY = ('y' in animation.dataset) ? parseFloat(animation.dataset.y) : 0;
 
         var start = currentY % (slotheight * slotimages);
-        console.log("spinner", i, start);
 
         var val = Math.floor(Math.random() * slotimages);
         var offs = val * slotheight;
